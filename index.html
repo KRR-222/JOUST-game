@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joust Game</title>
+<style>
+  body {
+    background: #111827;
+    color: white;
+    text-align: center;
+    font-family: Arial, sans-serif;
+  }
+  canvas {
+    background: #26384b;
+    border: 3px solid #d6b36a;
+    max-width: 95%;
+  }
+</style>
+</head>
+<body>
+
+<h1>JOUST</h1>
+<p>Arrow keys or W/S to move | SPACE to attack</p>
+<canvas id="game" width="800" height="450"></canvas>
+<h2 id="score">Score: 0</h2>
+<p id="message">Defeat the enemy knight!</p>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let player = { x: 100, y: 220, size: 25 };
+let enemy = { x: 700, y: 220, size: 25 };
+let score = 0;
+let attacking = false;
+let gameOver = false;
+let keys = {};
+
+document.addEventListener("keydown", e => {
+  keys[e.code] = true;
+  if (["ArrowUp", "ArrowDown", "Space"].includes(e.code))
+    e.preventDefault();
+});
+
+document.addEventListener("keyup", e => {
+  keys[e.code] = false;
+});
+
+function drawKnight(x, y, color, direction) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x - 18, y - 18, 36, 36);
+
+  // Helmet
+  ctx.fillStyle = "#d6b36a";
+  ctx.beginPath();
+  ctx.arc(x, y - 23, 12, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Lance
+  ctx.strokeStyle = "#eeeeee";
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(x + direction * 15, y);
+  ctx.lineTo(x + direction * 55, y);
+  ctx.stroke();
+}
+
+function update() {
+  if (gameOver) return;
+
+  if (keys["ArrowUp"] || keys["KeyW"]) player.y -= 4;
+  if (keys["ArrowDown"] || keys["KeyS"]) player.y += 4;
+
+  player.y = Math.max(50, Math.min(400, player.y));
+
+  enemy.x -= 1.5;
+  enemy.y += Math.sin(Date.now() / 250) * 1.5;
+
+  if (enemy.x < 40) {
+    enemy.x = 760;
+    enemy.y = 50 + Math.random() * 350;
+  }
+
+  attacking = !!keys["Space"];
+
+  if (
+    attacking &&
+    enemy.x > player.x &&
+    enemy.x < player.x + 75 &&
+    Math.abs(enemy.y - player.y) < 30
+  ) {
+    score += 10;
+    document.getElementById("score").textContent =
+      "Score: " + score;
+
+    enemy.x = 760;
+    enemy.y = 50 + Math.random() * 350;
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, 800, 450);
+
+  // Ground
+  ctx.fillStyle = "#42634b";
+  ctx.fillRect(0, 420, 800, 30);
+
+  // Player
+  drawKnight(player.x, player.y, "#2878d0", 1);
+
+  // Enemy
+  drawKnight(enemy.x, enemy.y, "#bd4545", -1);
+
+  ctx.fillStyle = "white";
+  ctx.font = "18px Arial";
+  ctx.fillText("PLAYER", 70, 35);
+  ctx.fillText("ENEMY", 680, 35);
+
+  if (attacking) {
+    ctx.fillStyle = "#f5d76e";
+    ctx.fillText("ATTACK!", player.x + 15, player.y - 35);
+  }
+}
+
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+</body>
+</html>
